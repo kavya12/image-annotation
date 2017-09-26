@@ -51,6 +51,11 @@
       font-family: sans-serif;
       }
 
+      textarea {
+        width: 500px;
+        height: 50px;
+      }
+
       /* Top panel : #navbar, #toolbar */
       .top_panel {
       position: fixed;
@@ -4390,7 +4395,7 @@ function init_spreadsheet_input(type, col_headers, data, row_names) {
         if ( ip_val.length > 30 ) {
           row.insertCell(-1).innerHTML = '<textarea ' +
             ' rows="' + (Math.floor(ip_val.length/30)-1) + '"' +
-            ' cols="50"' +
+            ' cols="100"' +
             ' id="' +   input_id + '"' +
             ' autocomplete="on"' +
             ' onchange="update_attribute_value(\'' + input_id + '\', this.value)"' +
@@ -4400,7 +4405,7 @@ function init_spreadsheet_input(type, col_headers, data, row_names) {
         } else {
           row.insertCell(-1).innerHTML = '<textarea ' +
             ' rows="' + (Math.floor(ip_val.length/30)-1) + '"' +
-            ' cols="50"' +
+            ' cols="100"' +
             ' id="' +   input_id + '"' +
             ' autocomplete="on"' +
             ' onchange="update_attribute_value(\'' + input_id + '\', this.value)"' +
