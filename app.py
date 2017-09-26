@@ -27,6 +27,18 @@ def home(user):
     else:
         return abort(404)
 
+@app.route("/<user>/save_changes", methods=["POST"])
+def save_changes(user):
+    ANNOTATION_DIR = os.path.join(app.static_folder, 'annotations/' + user)
+    annotations = request.get_json()
+    f = annotations['filename'].split('/')[-1]
+    file_ext = f.split('.')[-1]
+    annotation_file_name = f.replace(file_ext, 'json')
+    annotation_file_path = os.path.join(ANNOTATION_DIR, annotation_file_name)
+    with open(annotation_file_path, 'w') as handle:
+        json.dump({annotations['filename']:annotations}, handle)
+    return "saved."
+
 @app.route("/<user>/save", methods=['POST'])
 def save(user):
     ANNOTATION_DIR = os.path.join(app.static_folder, 'annotations/' + user)
@@ -45,15 +57,13 @@ def get_image(img_file):
 def load(user):
     ANNOTATION_DIR = os.path.join(app.static_folder, 'annotations/' + user)
     files = os.listdir(ANNOTATION_DIR)
-    last_saved_file = sorted(files, reverse=True)[0]
-    last_saved_path = os.path.join(ANNOTATION_DIR, last_saved_file)
-    print('last_saved_file', last_saved_path)
-    try:
-        with open(last_saved_path, 'r') as handle:
-            annotations = json.load(handle)
-    except:
-        print('No pickle found!!!')
-        annotations = {}
+    annotations = {}
+    for f in files:
+        f_path = os.path.join(ANNOTATION_DIR, f)
+        with open(f_path, 'r') as handle:
+            f_annotations = json.load(handle)
+        for k, v in f_annotations.items():
+            annotations[k] = v
     return jsonify(annotations)
 
 @app.route('/annotations', defaults={'req_path': ''})

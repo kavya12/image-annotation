@@ -575,21 +575,21 @@
         <div class="leftsidebar_accordion_panel" id="img_list_panel"></div>
 
         <button onclick="toggle_reg_attr_panel()" class="leftsidebar_accordion" id="reg_attr_panel_button">Region Attributes</button>
-        <button onclick="toggle_file_attr_panel()" class="leftsidebar_accordion" id="file_attr_panel_button">File Attributes</button>
+        <!-- <button onclick="toggle_file_attr_panel()" class="leftsidebar_accordion" id="file_attr_panel_button">File Attributes</button> -->
 
-        <button onclick="toggle_accordion_panel(this)" class="leftsidebar_accordion">Keyboard Shortcuts</button>
+        <button onclick="toggle_accordion_panel(this)" class="leftsidebar_accordion active">Keyboard Shortcuts</button>
         <!-- <button onclick="load_annotations_from_server()" class="leftsidebar_accordion">Load Saved Annotations</button> -->
-        <div class="leftsidebar_accordion_panel">
+        <div class="leftsidebar_accordion_panel show">
           <table style="padding: 2em 0em;">
             <tr>
-              <td style="width: 6em;">n/p (&larr;/&rarr;)</td>
+              <td style="width: 6em;"> (&larr;/&rarr;)</td>
               <td>Next/Previous image</td>
             </tr>
             <tr>
               <td>+&nbsp;/&nbsp;-&nbsp;/&nbsp;=</td>
               <td>Zoom in/out/reset</td>
             </tr>
-            <tr>
+            <!-- <tr>
               <td>Ctrl + c</td>
               <td>Copy sel. regions</td>
             </tr>
@@ -600,7 +600,7 @@
             <tr>
               <td>Ctrl + a</td>
               <td>Select all regions</td>
-            </tr>
+            </tr> -->
             <tr>
               <td>Del, Bkspc</td>
               <td>Delete image region</td>
@@ -609,14 +609,14 @@
               <td>Esc</td>
               <td>Cancel operation</td>
             </tr>
-            <tr>
+            <!-- <tr>
               <td>Ctrl + s</td>
               <td>Download annotations</td>
             </tr>
             <tr>
               <td>Spacebar</td>
               <td>Toggle image list</td>
-            </tr>
+            </tr> -->
           </table>
         </div>
 
@@ -928,7 +928,8 @@ var BBOX_SELECTED_FILL_COLOR           = "#ffffff";
 
 // save to server setup
 var annotator = '{{annotator}}';
-var save_to_server_counter = 0;
+
+
 
 // load from url
 // var img_url_list = ['http://localhost:5000/images/004720.jpeg', 'http://localhost:5000/images/009423.jpeg', 'http://localhost:5000/images/001967.jpeg']
@@ -954,7 +955,10 @@ function init_payload() {
 }
 
 init_payload();
-
+$(function() {
+    $('#loaded_img_panel').click();
+    $('#reg_attr_panel_button').click();
+});
 //
 // Data structure for annotations
 //
@@ -4174,11 +4178,14 @@ function check_local_storage() {
 
 function save_annotations_to_server(annotations){
   console.log('saving annotations to server.');
+  console.log('changing file:', _via_image_id);
+  // console.log(JSON.stringify(JSON.parse(annotations)[_via_image_id]));
+  changed_annotation = JSON.stringify(JSON.parse(annotations)[_via_image_id]);
   $.ajax({
-       url: 'http://localhost:5000/'+annotator+'/save',
+       url: 'http://localhost:5000/'+annotator+'/save_changes',
        type: 'POST',
        contentType:'application/json',
-       data: annotations,
+       data: changed_annotation,
        dataType:'json'
      });
 }
