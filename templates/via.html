@@ -53,7 +53,7 @@
 
       textarea {
         width: 500px;
-        height: 50px;
+        height: 100px;
       }
 
       /* Top panel : #navbar, #toolbar */
@@ -998,8 +998,8 @@ function load_annotations_from_server(){
                   var annotations = JSON.stringify(msg);
                   import_annotations_from_json(annotations);
               },
-              failure: function( r, o ) {
-					           alert( "Submit failed: " + r.responseText );
+              error: function(XMLHttpRequest, textstatus, error) {
+					           alert( "Submit failed: " + error + "\nAnnotations not loaded!");
               }
         });
 }

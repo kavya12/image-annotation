@@ -23,6 +23,8 @@ def get_image_list(annotator):
 @app.route("/<user>")
 def home(user):
     if user in ANNOTATORS:
+        image_list = get_image_list(user)
+        if not image_list: return 'No images allotted. \nContact Admin.', 500
         return render_template('via.html', annotator=user, image_list=get_image_list(user))
     else:
         return abort(404)
@@ -45,9 +47,12 @@ def save(user):
     annotations = request.get_json()
     annotation_file_name = user + '_annotations_' + time.strftime("%Y_%m_%d_%H:%M:%S", time.localtime()) + '.json'
     annotation_file_path = os.path.join(ANNOTATION_DIR, annotation_file_name)
-    with open(annotation_file_path, 'w') as handle:
-        json.dump(annotations, handle)
-    return "annotations saved."
+    try:
+        with open(annotation_file_path, 'w') as handle:
+            json.dump(annotations, handle)
+    except:
+        return 'Annotation save failed.', 500
+    return "Annotations saved.", 200
 
 @app.route("/images/<user>/<img_file>")
 def get_image(img_file):
@@ -58,12 +63,15 @@ def load(user):
     ANNOTATION_DIR = os.path.join(app.static_folder, 'annotations/' + user)
     files = os.listdir(ANNOTATION_DIR)
     annotations = {}
-    for f in files:
-        f_path = os.path.join(ANNOTATION_DIR, f)
-        with open(f_path, 'r') as handle:
-            f_annotations = json.load(handle)
-        for k, v in f_annotations.items():
-            annotations[k] = v
+    try:
+        for f in files:
+            f_path = os.path.join(ANNOTATION_DIR, f)
+            with open(f_path, 'r') as handle:
+                f_annotations = json.load(handle)
+            for k, v in f_annotations.items():
+                annotations[k] = v
+    except:
+        return '', 500
     return jsonify(annotations)
 
 @app.route('/annotations', defaults={'req_path': ''})
