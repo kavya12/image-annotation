@@ -933,11 +933,9 @@ var BBOX_SELECTED_FILL_COLOR           = "#ffffff";
 
 // save to server setup
 var annotator = '{{annotator}}';
-
-
+var app_url = '{{flask_app_url}}';
 
 // load from url
-// var img_url_list = ['http://localhost:5000/images/004720.jpeg', 'http://localhost:5000/images/009423.jpeg', 'http://localhost:5000/images/001967.jpeg']
 var img_url_list = {{ image_list|tojson }};
 function init_payload() {
     for (var i=0; i<img_url_list.length; ++i) {
@@ -990,7 +988,7 @@ function load_annotations_from_server(){
   clear_localStorage()
   $.ajax({
               type: "GET", //rest Type
-              url: "http://localhost:5000/"+annotator+"/load",
+              url: app_url+"/"+annotator+"/load",
               contentType: "application/json; charset=utf-8",
               async: false,
               success: function (msg) {
@@ -1208,7 +1206,7 @@ function import_region_attributes_from_csv(data) {
 
   _via_reload_img_table = true;
   show_message('Imported ' + attributes_import_count + ' attributes from CSV file');
-  save_current_data_to_browser_cache();
+  save_current_data_to_cache();
 }
 
 function import_annotations_from_file(event) {
@@ -1361,7 +1359,7 @@ function import_annotations_from_csv(data) {
 
   _via_reload_img_table = true;
   show_image(_via_image_index);
-  save_current_data_to_browser_cache();
+  save_current_data_to_cache();
 }
 
 function import_annotations_from_json(data) {
@@ -2263,7 +2261,7 @@ _via_reg_canvas.addEventListener('mouseup', function(e) {
     }
     _via_redraw_reg_canvas();
     _via_reg_canvas.focus();
-    save_current_data_to_browser_cache();
+    save_current_data_to_cache();
     return;
   }
 
@@ -2369,7 +2367,7 @@ _via_reg_canvas.addEventListener('mouseup', function(e) {
 
     _via_redraw_reg_canvas();
     _via_reg_canvas.focus();
-    save_current_data_to_browser_cache();
+    save_current_data_to_cache();
     return;
   }
 
@@ -2429,7 +2427,7 @@ _via_reg_canvas.addEventListener('mouseup', function(e) {
 
         _via_current_polygon_region_id = -1;
         update_attributes_panel();
-        save_current_data_to_browser_cache();
+        save_current_data_to_cache();
       } else {
         // user clicked on a new polygon point
         _via_canvas_regions[_via_current_polygon_region_id].shape_attributes.get('all_points_x').push(canvas_x0);
@@ -2488,7 +2486,7 @@ _via_reg_canvas.addEventListener('mouseup', function(e) {
             _via_canvas_regions.push(canvas_point_region);
 
             update_attributes_panel();
-            save_current_data_to_browser_cache();
+            save_current_data_to_cache();
 
             break;
           }
@@ -2611,7 +2609,7 @@ _via_reg_canvas.addEventListener('mouseup', function(e) {
     _via_redraw_reg_canvas();
     _via_reg_canvas.focus();
 
-    save_current_data_to_browser_cache();
+    save_current_data_to_cache();
     return;
   }
 
@@ -3950,7 +3948,7 @@ function del_sel_regions() {
   }
   _via_reg_canvas.focus();
   update_attributes_panel();
-  save_current_data_to_browser_cache();
+  save_current_data_to_cache();
 
   show_message('Deleted ' + del_region_count + ' selected regions');
 }
@@ -4187,16 +4185,32 @@ function save_annotations_to_server(annotations){
   // console.log(JSON.stringify(JSON.parse(annotations)[_via_image_id]));
   changed_annotation = JSON.stringify(JSON.parse(annotations)[_via_image_id]);
   $.ajax({
-       url: 'http://localhost:5000/'+annotator+'/save_changes',
+       url: app_url+'/'+annotator+'/save_changes',
        type: 'POST',
        contentType:'application/json',
        data: changed_annotation,
-       dataType:'json'
+       dataType:'json',
+       success: function(){ console.log('successfully uploaded annotation cache'); },
+       error: function(){ console.log('failed to upload annotations to server');}
      });
 }
 
-function save_current_data_to_browser_cache() {
+function save_current_data_to_cache() {
   setTimeout(function() {
+    console.log('saving annotations to server cache...');
+    if ( ! _via_is_save_ongoing){
+       _via_is_save_ongoing = true;
+       var img_metadata = pack_via_metadata('json');
+       save_annotations_to_server(img_metadata[0]);
+       _via_is_save_ongoing = false;
+    }
+    else{
+       console.log('saving annotations to server failed. Another save ongoing!');
+    }
+    console.log('finished saving annotations to server cache.');
+  });
+  setTimeout(function() {
+    console.log('saving annotations to browser cache...');
     if ( _via_is_local_storage_available &&
          ! _via_is_save_ongoing) {
       try {
@@ -4205,7 +4219,6 @@ function save_current_data_to_browser_cache() {
         var timenow = new Date().toUTCString();
         localStorage.setItem('_via_timestamp', timenow);
         localStorage.setItem('_via_img_metadata', img_metadata[0]);
-        save_annotations_to_server(img_metadata[0]);
         // save attributes
         var attr = [];
         for (var attribute of _via_region_attributes) {
@@ -4222,6 +4235,12 @@ function save_current_data_to_browser_cache() {
         console.log(err.message);
       }
     }
+    else{
+        console.log('failed to save annotations to browser cache. local_storage_available:'
+                         + _via_is_local_storage_available
+                         + ' ongoing save:' + _via_is_save_ongoing);
+    }
+    console.log('finished saving to browser cache');
   }, 1000);
 }
 
@@ -4572,7 +4591,7 @@ function update_attribute_value(attr_id, value) {
   }
   _via_redraw_reg_canvas();
   _via_is_user_updating_attribute_value = false;
-  save_current_data_to_browser_cache();
+  save_current_data_to_cache();
 }
 
 function add_new_attribute(type, attribute_name) {
