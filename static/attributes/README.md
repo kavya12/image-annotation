@@ -1,0 +1,1 @@
+Make directories for each of the annotators and add a file in each directory titled 'list_of_attributes' which contains the attributes that can be annotated by the annotator.
