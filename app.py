@@ -11,11 +11,12 @@ from flask import Flask, abort, flash, redirect, render_template, request, url_f
 
 
 app = Flask(__name__)
+app.config.from_pyfile('config_file.cfg')
 app.config['DEBUG'] = True
 
 
 ANNOTATORS = ['jmathai']
-APP_URL = "http://localhost:5000" 
+APP_URL = app.config['APP_URL']
 
 def get_image_list(annotator):
     '''
