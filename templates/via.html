@@ -470,6 +470,20 @@
       0% { transform: rotate(0deg); }
       100% { transform: rotate(360deg); }
       }
+	  label:hover, label:active {
+		color: blue;
+	  }
+	  label{
+	    font-size: 16px;
+		padding: 2px;
+	  }
+	  #attributes_panel_table td,th{
+		min-width: 100px;
+	  
+	  }
+	  form{
+		text-align: left;
+	  }
     </style>
   </head>
 
@@ -580,7 +594,7 @@
         <div class="leftsidebar_accordion_panel" id="img_list_panel"></div>
 
         <button onclick="toggle_reg_attr_panel()" class="leftsidebar_accordion" id="reg_attr_panel_button">Region Attributes</button>
-        <!-- <button onclick="toggle_file_attr_panel()" class="leftsidebar_accordion" id="file_attr_panel_button">File Attributes</button> -->
+        <button onclick="toggle_file_attr_panel()" class="leftsidebar_accordion" id="file_attr_panel_button">File Attributes</button>
 
         <button onclick="toggle_accordion_panel(this)" class="leftsidebar_accordion active">Keyboard Shortcuts</button>
         <!-- <button onclick="load_annotations_from_server()" class="leftsidebar_accordion">Load Saved Annotations</button> -->
@@ -785,7 +799,7 @@
   - Persistence of annotation data in browser cache (i.e. localStorage)
   - Handlers for attributes input panel (spreadsheet like user input panel)
 
-  See [Source code documentation](https://gitlab.com/vgg/via/blob/develop/CodeDoc.md)
+  See [Source code documentation](https://gitlab.com/vgg/via/blob/develop/CodeDoc.md)https://gitlab.com/vgg/via/blob/develop/CodeDoc.md)
   and [Contributing Guidelines](https://gitlab.com/vgg/via/blob/develop/CONTRIBUTING.md)
   for more details.
 
@@ -895,8 +909,42 @@ var _via_current_update_attribute_name = "";
 var _via_current_update_region_id      = -1;
 var _via_file_attributes               = new Set();
 // Fields for Text annotation.
-_via_file_attributes.add('Relevant?');
-_via_file_attributes.add('Comment');
+//The fields have to be listed in the list_of_attributes.txt file corresponding to each user
+/*_via_file_attributes.add('Protest / Rally / Non-Protest');
+_via_file_attributes.add('Sign');
+_via_file_attributes.add('Flag');
+_via_file_attributes.add('Fire');
+_via_file_attributes.add('Law Enforcement');
+_via_file_attributes.add('Children');
+_via_file_attributes.add('Group of 20');
+_via_file_attributes.add('Group of 100');
+_via_file_attributes.add('Night');
+_via_file_attributes.add('Shout');
+_via_file_attributes.add('Weapons'); 
+_via_file_attributes.add('Masks');
+_via_file_attributes.add('Perceived Level of Violence');
+_via_file_attributes.add('Cause of Protest');
+_via_file_attributes.add('Clashes between Police and Protesters');*/
+
+//Options for each annotation are stored in this object
+_via_attribute_options = { 'Protest / Rally / Non-Protest' : ['Protest', 'Rally', 'Non-Protest'],
+							'Sign' : [ 'Yes', 'No' ],
+							'Flag' : [ 'Yes', 'No' ],
+							'Fire' : [ 'Yes', 'No' ],
+							'Law Enforcement' : [ 'Yes', 'No' ],
+							'Children' : [ 'Yes', 'No' ],
+							'Group of 20' : [ 'Yes', 'No' ],
+							'Group of 100' : [ 'Yes', 'No' ],
+							'Night' :  [ 'Yes', 'No' ],
+							'Shout' :  [ 'Yes', 'No' ],
+							'Weapons' :  [ 'Yes', 'No' ],
+							'Masks' : ['Yes', 'No'],
+							'Perceived Level of Violence' : ['No Violence', 'Slightly violent', 'Violent', 'Highly violent'],
+							'Cause of Protest' : ['Cause cannot be identified', 'Anti-government/leader', 'Climate change', 'Terrorism', 'Women\'s rights', 'Black lives matter', 'Free press/social media', 'Anti-war protests', 'Anti-corruption', 'LGBTQ', 'None of the above causes', 'No protest present in image'],
+							'Clashes between Police and Protesters' : ['Yes', 'No']							
+						}
+
+
 var _via_visible_attr_name             = '';
 
 // persistence to local storage
@@ -937,6 +985,7 @@ var app_url = '{{flask_app_url}}';
 
 // load from url
 var img_url_list = {{ image_list|tojson }};
+var attributes_list_for_user = {{ attributes_list|tojson}};
 function init_payload() {
     for (var i=0; i<img_url_list.length; ++i) {
     	var url = img_url_list[i];
@@ -952,6 +1001,13 @@ function init_payload() {
     	_via_reload_img_table = true;
     }
     //_via_image_index = get_random_int(0, img_url_list.length);
+	
+	//populate the attributes that can be annotated by the user
+	for(var i=0; i<attributes_list_for_user.length; ++i){
+		_via_file_attributes.add(attributes_list_for_user[i]);
+	}
+	
+	
     _via_image_index = 0;
     show_image(_via_image_index);
     load_annotations_from_server();
@@ -4340,10 +4396,11 @@ function init_spreadsheet_input(type, col_headers, data, row_names) {
   var firstrow = attrtable.insertRow(0);
 
   // top-left cell
+  if(type === 'region_attributes'){
   var topleft_cell = firstrow.insertCell(0);
   topleft_cell.innerHTML = '';
   topleft_cell.style.border = 'none';
-
+  }
   for (var col_header of col_headers) {
     firstrow.insertCell(-1).innerHTML = '<b>' + col_header + '</b>';
   }
@@ -4375,7 +4432,7 @@ function init_spreadsheet_input(type, col_headers, data, row_names) {
       region_traversal_order = all_reg_list;
     }
   }
-
+  
   var sel_rows = [];
   for ( var i=0; i < data.length; ++i ) {
     var rowi = i;
@@ -4392,11 +4449,12 @@ function init_spreadsheet_input(type, col_headers, data, row_names) {
     }
 
     var row = attrtable.insertRow(-1);
-    var region_id_cell              = row.insertCell(0);
-    region_id_cell.innerHTML        = '' + row_names[rowi] + '';
-    region_id_cell.style.fontWeight = 'bold';
-    region_id_cell.style.width      = '2em';
-
+    if(type === 'region_attributes'){
+      var region_id_cell              = row.insertCell(0);
+      region_id_cell.innerHTML        = '' + row_names[rowi] + '';
+      region_id_cell.style.fontWeight = 'bold';
+      region_id_cell.style.width      = '2em';
+    }
     if (data[rowi].is_user_selected) {
       region_id_cell.style.backgroundColor = '#5599FF';
       row.style.backgroundColor = '#f2f2f2';
@@ -4405,40 +4463,87 @@ function init_spreadsheet_input(type, col_headers, data, row_names) {
 
     for ( var key of col_headers ) {
       var input_id = type[0] + '#' + key + '#' + rowi;
+	  //Create checked array which maintains the options that are checked
+	  var checked = [];
+	  if(type==='file_attributes'){
+		checked = new Array(_via_attribute_options[key].length);
+	  }
+	  
       if ( di.has(key) ) {
         var ip_val = di.get(key);
         // escape all single and double quotes
         ip_val = ip_val.replace(/'/g, '\'');
         ip_val = ip_val.replace(/"/g, '&quot;');
-
-        if ( ip_val.length > 30 ) {
-          row.insertCell(-1).innerHTML = '<textarea ' +
-            ' rows="' + (Math.floor(ip_val.length/30)-1) + '"' +
-            ' cols="100"' +
-            ' id="' +   input_id + '"' +
-            ' autocomplete="on"' +
-            ' onchange="update_attribute_value(\'' + input_id + '\', this.value)"' +
-            ' onblur="attr_input_blur(' + rowi + ')"' +
-            ' onfocus="attr_input_focus(' + rowi + ');"' +
-            ' >' + ip_val + '</textarea>';
-        } else {
-          row.insertCell(-1).innerHTML = '<textarea ' +
-            ' rows="' + (Math.floor(ip_val.length/30)-1) + '"' +
-            ' cols="100"' +
-            ' id="' +   input_id + '"' +
-            ' autocomplete="on"' +
-            ' onchange="update_attribute_value(\'' + input_id + '\', this.value)"' +
-            ' onblur="attr_input_blur(' + rowi + ')"' +
-            ' onfocus="attr_input_focus(' + rowi + ');"' +
-            ' >' + ip_val + '</textarea>';
+		//populate checked array which maintains if an option is checked or not when loaded from json
+		if(type==='file_attributes'){
+		
+            var options = _via_attribute_options[key];
+            for(i=0; i<options.length; i++){
+                if(options[i]==ip_val)
+                    checked[i] = "checked";
+                else
+                    checked[i] = "";
+           }
         }
-      } else {
+        else
+        { 
+			if ( ip_val.length > 30 ) {
+			  row.insertCell(-1).innerHTML = '<textarea ' +
+				' rows="' + (Math.floor(ip_val.length/30)-1) + '"' +
+				' cols="100"' +
+				' id="' +   input_id + '"' +
+				' autocomplete="on"' +
+				' onchange="update_attribute_value(\'' + input_id + '\', this.value)"' +
+				' onblur="attr_input_blur(' + rowi + ')"' +
+				' onfocus="attr_input_focus(' + rowi + ');"' +
+				' >' + ip_val + '</textarea>';
+			} 
+			else {
+			  row.insertCell(-1).innerHTML = '<textarea ' +
+				' rows="' + (Math.floor(ip_val.length/30)-1) + '"' +
+				' cols="100"' +
+				' id="' +   input_id + '"' +
+				' autocomplete="on"' +
+				' onchange="update_attribute_value(\'' + input_id + '\', this.value)"' +
+				' onblur="attr_input_blur(' + rowi + ')"' +
+				' onfocus="attr_input_focus(' + rowi + ');"' +
+				' >' + ip_val + '</textarea>';
+			}
+			
+		} 
+		}
+		else {
+		//if key is not present in loaded json, then populate checked as empty
+		if(type==='file_attributes'){
+			for(i=0; i<checked.length; i++)
+				checked[i] = "";
+	    }
+		else{
         row.insertCell(-1).innerHTML = '<textarea type="text"' +
           ' id="' + input_id + '"' +
           ' onchange="update_attribute_value(\'' + input_id + '\', this.value)" ' +
           ' onblur="attr_input_blur(' + rowi + ')"' +
           ' onfocus="attr_input_focus(' + rowi + ');" />';
+		  
+		}
       }
+	  //generate panel table contents with radio buttons and options
+	  if(type==='file_attributes'){
+	  
+		var fieldContent = '<form>';
+
+		var options = _via_attribute_options[key];
+		
+			for(i=0; i<options.length; i++)
+			fieldContent +='<input type="radio" id="' + input_id + options[i] +  
+				'" name="' + key + 
+				'" value="' + options[i] + '" ' + checked[i] + 
+				' onclick="update_attribute_value(\'' + input_id + '\', this.value)"' +'>' + 
+				'<label for="' + input_id + options[i] + '">' + options[i] + '</label>' + '<br> ' ;
+
+		fieldContent += '</form>' ;
+		row.insertCell(-1).innerHTML = fieldContent;
+	  }
     }
   }
 
@@ -4481,10 +4586,14 @@ function update_region_attributes_input_panel() {
 }
 
 function update_file_attributes_input_panel() {
+
+  var parts = _via_current_image_filename.split("/");
+  var image_name = parts[parts.length-1];
+
   init_spreadsheet_input('file_attributes',
                          _via_file_attributes,
                          [_via_img_metadata[_via_image_id].file_attributes],
-                         [_via_current_image_filename]);
+                         [image_name]);
 }
 
 function toggle_attributes_input_panel() {
