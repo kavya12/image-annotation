@@ -29,14 +29,31 @@ def get_image_list(annotator):
         app.logger.error('IMG_PATH:%s doesn\'t exist', IMG_PATH)
         return []
 
+def get_annotation_attributes(annotator):
+	'''
+	Return a list of attributes to be annotated by the user.
+	'''
+	ANNOT_ATTRIBUTES_FILE = os.path.join(app.static_folder, 'attributes/' + annotator + '/list_of_attributes.txt')
+	
+	with open(ANNOT_ATTRIBUTES_FILE, 'r') as af:
+		return [line.strip() for line in af.readlines()]
+
+		
 @app.route("/<user>")
 def home(user):
     if user in ANNOTATORS:
         image_list = get_image_list(user)
+        attributes_list = get_annotation_attributes(user)
+
         if not image_list:
             app.logger.error('Image list not obtained for user:%s', user)
             return 'No images allotted. \nContact Admin.', 500
-        return render_template('via.html', annotator=user, image_list=get_image_list(user), flask_app_url=APP_URL)
+			
+        if not attributes_list:
+            app.logger.error('Annotation attributes list not obtained for user:%s', user)
+            return 'No annotation attributes allotted. \nContact Admin.', 500
+			
+        return render_template('via.html', annotator=user, image_list=get_image_list(user), flask_app_url=APP_URL, attributes_list = get_annotation_attributes(user))
     else:
         app.logger.error('User:%s not in the annotator list', user)
         return abort(404)
