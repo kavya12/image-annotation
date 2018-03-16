@@ -36,15 +36,15 @@ def get_image_list(annotator):
         return []
 
 def get_annotation_attributes(annotator):
-	'''
-	Return a list of attributes to be annotated by the user.
-	'''
-	ANNOT_ATTRIBUTES_FILE = os.path.join(app.static_folder, 'attributes/' + annotator + '/list_of_attributes.txt')
-	
-	with open(ANNOT_ATTRIBUTES_FILE, 'r') as af:
-		return [line.strip() for line in af.readlines()]
+    '''
+    Return a list of attributes to be annotated by the user.
+    '''
+    ANNOT_ATTRIBUTES_FILE = os.path.join(app.static_folder, 'attributes/' + annotator + '/list_of_attributes.txt')
+    
+    with open(ANNOT_ATTRIBUTES_FILE, 'r') as af:
+        return [line.strip() for line in af.readlines()]
 
-		
+        
 @app.route("/<user>")
 def home(user):
     if user in ANNOTATORS:
@@ -54,7 +54,7 @@ def home(user):
         if not image_list:
             app.logger.error('Image list not obtained for user:%s', user)
             return 'No images allotted. \nContact Admin.', 500
-			
+            
         if not attributes_list:
             app.logger.error('Annotation attributes list not obtained for user:%s', user)
             return 'No annotation attributes allotted. \nContact Admin.', 500
@@ -137,5 +137,5 @@ def dir_listing(req_path):
     files = [os.path.join(req_path, f) for f in files]
     return render_template('files.html', files=files)
 
-	
+    
 app.run(host=app.config['HOST'],port=int(app.config['PORT']))
