@@ -16,7 +16,12 @@ app.config['DEBUG'] = True
 
 
 ANNOTATORS = ['jmathai']
-APP_URL = app.config['APP_URL']
+APP_URL = app.config['SCHEME'] + '://' + app.config['HOST'] + ':' + app.config['PORT']
+handler = RotatingFileHandler('image-annotation.log', maxBytes=10000, backupCount=1)
+handler.setLevel(logging.INFO)
+app.logger.addHandler(handler)
+app.logger.info("USING APP_URL:%s", APP_URL)
+
 
 def get_image_list(annotator):
     '''
@@ -53,7 +58,6 @@ def home(user):
         if not attributes_list:
             app.logger.error('Annotation attributes list not obtained for user:%s', user)
             return 'No annotation attributes allotted. \nContact Admin.', 500
-			
         return render_template('via.html', annotator=user, image_list=get_image_list(user), flask_app_url=APP_URL, attributes_list = get_annotation_attributes(user))
     else:
         app.logger.error('User:%s not in the annotator list', user)
@@ -133,9 +137,5 @@ def dir_listing(req_path):
     files = [os.path.join(req_path, f) for f in files]
     return render_template('files.html', files=files)
 
-if __name__ == '__main__':
-    handler = RotatingFileHandler('image-annotation.log', maxBytes=10000, backupCount=1)
-    handler.setLevel(logging.INFO)
-    app.logger.addHandler(handler)
-    app.logger.info("USING APP_URL:%s", APP_URL)
-    app.run()
+	
+app.run(host=app.config['HOST'],port=int(app.config['PORT']))
